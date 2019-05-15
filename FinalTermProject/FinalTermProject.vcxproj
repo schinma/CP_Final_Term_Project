@@ -20,6 +20,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Shader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Shader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\triangle.frag" />
+    <None Include="shaders\triangle.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -92,7 +100,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Graphics\Tools\glew\include;C:\Graphics\Tools\glm;C:\Graphics\Tools\glfw\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;C:\Graphics\Tools\glew\include;C:\Graphics\Tools\glm;C:\Graphics\Tools\glfw\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -123,7 +131,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Graphics\Tools\glew\include;C:\Graphics\Tools\glm;C:\Graphics\Tools\glfw\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;C:\Graphics\Tools\glew\include;C:\Graphics\Tools\glm;C:\Graphics\Tools\glfw\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

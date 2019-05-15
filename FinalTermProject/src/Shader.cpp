@@ -3,10 +3,10 @@
 Shader::Shader(const std::string &vertexPath, const std::string &fragPath)
 {
 	std::string vertexCode = loadShaderFromFile(vertexPath);
-	std::string fragCode = loadShaderFromFile(fragCode);
+	std::string fragCode = loadShaderFromFile(fragPath);
 
 	GLuint vertexShaderID = compileShader(vertexCode, GL_VERTEX_SHADER);
-	GLuint fragmentShaderID = compileShader(fragCode, GL_VERTEX_SHADER);
+	GLuint fragmentShaderID = compileShader(fragCode, GL_FRAGMENT_SHADER);
 
 	programID = glCreateProgram();
 
@@ -38,7 +38,7 @@ std::string Shader::loadShaderFromFile(const std::string &filename)
 {
 	std::ifstream file(filename);
 
-	if (!file.good)
+	if (!file.good())
 	{
 		std::cout << "Failed to open file : " << filename << std::endl;
 	}
@@ -129,15 +129,15 @@ void Shader::disable()
 
 void Shader::setBool(const std::string &name, bool value) const
 {
-	glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
+	glUniform1i(glGetUniformLocation(programID, name.c_str()), (int)value);
 }
 
 void Shader::setInt(const std::string &name, int value) const
 {
-	glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+	glUniform1i(glGetUniformLocation(programID, name.c_str()), value);
 }
 
 void Shader::setFloat(const std::string &name, float value) const
 {
-	glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+	glUniform1f(glGetUniformLocation(programID, name.c_str()), value);
 }

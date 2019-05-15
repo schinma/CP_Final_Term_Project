@@ -18,5 +18,21 @@
     <ClCompile Include="src\Main.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\Shader.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Shader.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\triangle.frag">
+      <Filter>Fichiers sources</Filter>
+    </None>
+    <None Include="shaders\triangle.vert">
+      <Filter>Fichiers sources</Filter>
+    </None>
   </ItemGroup>
 </Project>
