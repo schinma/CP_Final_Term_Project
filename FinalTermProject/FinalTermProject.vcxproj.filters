@@ -32,12 +32,24 @@
     <ClInclude Include="include\stb_image.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\Mesh.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Texture.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Model.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Camera.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\triangle.frag">
+    <None Include="shaders\model_loading.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\triangle.vert">
+    <None Include="shaders\model_loading.vert">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

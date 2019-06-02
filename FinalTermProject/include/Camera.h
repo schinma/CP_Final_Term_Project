@@ -1,157 +1,130 @@
 #pragma once
-class Camera;
 
-/**
- * \brief A class to control the viewing parameters.
- *
- * This class maintains and provides access to parameters of a simple viewing model,
- * and it supports basic viewing operations like translation, rotation, and zooming.
- * The view parameters are:
- *		- The view point (where the camera is located)
- *		- The view center (a point that is being looked at; the closer it is to the
- *		   view point, the greater the degree of zooming)
- *		- The up vector (defines the global vertical axis; typically this is the y axis)
- *		- The field of view (defined as the vertical angular span of the viewing
- *		   frustrum in radians
- *		- The aspect ratio (the ratio width/height for the resultant image)
-*/
+#include <GL/glew.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <vector>
+
+// Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
+enum Camera_Movement {
+	FORWARD,
+	BACKWARD,
+	LEFT,
+	RIGHT
+};
+
+// Default camera values
+const float YAW = -90.0f;
+const float PITCH = 0.0f;
+const float SPEED = 2.5f;
+const float SENSITIVITY = 0.1f;
+const float ZOOM = 45.0f;
 
 
-class Camera {
+// An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
+class Camera
+{
 public:
+	// Camera Attributes
+	glm::vec3 Position;
+	glm::vec3 Front;
+	glm::vec3 Up;
+	glm::vec3 Right;
+	glm::vec3 WorldUp;
+	// Euler Angles
+	float Yaw;
+	float Pitch;
+	// Camera options
+	float MovementSpeed;
+	float MouseSensitivity;
+	float Zoom;
 
-	/** Constructor */
-	Camera(
-		const glm::vec3 &viewPoint, const  glm::vec3 &viewCenter, const  glm::vec3 &upVector,
-		float fieldOfView, float aspectRatio
-	);
+	// Constructor with vectors
+	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+	{
+		Position = position;
+		WorldUp = up;
+		Yaw = yaw;
+		Pitch = pitch;
+		updateCameraVectors();
+	}
+	// Constructor with scalar values
+	Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+	{
+		Position = glm::vec3(posX, posY, posZ);
+		WorldUp = glm::vec3(upX, upY, upZ);
+		Yaw = yaw;
+		Pitch = pitch;
+		updateCameraVectors();
+	}
 
-	/** The worldspace location of the center of focus */
-	glm::vec3 getViewPoint() const;
-	/** This corresponds to the worldspace location of  OpenGL's "look at" point */
-	glm::vec3 getViewCenter() const;
-	/**	The up vector in worldspace coordinates */
-	glm::vec3 getUpVector() const;
-	float getFieldOfView() const;
-	float getAspectRatio() const;
+	// Returns the view matrix calculated using Euler Angles and the LookAt Matrix
+	glm::mat4 GetViewMatrix()
+	{
+		return glm::lookAt(Position, Position + Front, Up);
+	}
 
-	/** The (normalized) worldspace vector from the viewpoint	to the view center */
-	glm::vec3 getViewDir() const;
+	// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
+	void ProcessKeyboard(Camera_Movement direction, float deltaTime)
+	{
+		float velocity = MovementSpeed * deltaTime;
+		if (direction == FORWARD)
+			Position += Front * velocity;
+		if (direction == BACKWARD)
+			Position -= Front * velocity;
+		if (direction == LEFT)
+			Position -= Right * velocity;
+		if (direction == RIGHT)
+			Position += Right * velocity;
+	}
 
-	/** The worldspace direction (i.e., normalized vector) of the horizontal image axis */
-	glm::vec3 getImagePlaneHorizDir() const;
+	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
+	void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)
+	{
+		xoffset *= MouseSensitivity;
+		yoffset *= MouseSensitivity;
 
-	/** The worldspace direction (i.e., normalized vector) of the vertical image axis	*/
-	glm::vec3 getImagePlaneVertDir() const;
+		Yaw += xoffset;
+		Pitch += yoffset;
 
-	/**
-	 * Translate
-	 *
-	 * These methods alter the view based on mouse movement.  The arguments
-	 * changeHoriz and changeVert specify, respectively, the amount
-	 * the mouse has moved horizontally/vertically as a fraction of the
-	 * total screen width/height.
-	 *
-	 * translate: The final argument determines whether the translation is
-	 * parallel to the view plane; if not, then only the vertical mouse
-	 * movement (second argument) is used.  The actual amount of
-	 * translation is determined by the distance between the view center
-	 * and the view point.
-	 *
-	*/
-	void translate(float changeHoriz, float changeVert, bool parallelToViewPlane);
+		// Make sure that when pitch is out of bounds, screen doesn't get flipped
+		if (constrainPitch)
+		{
+			if (Pitch > 89.0f)
+				Pitch = 89.0f;
+			if (Pitch < -89.0f)
+				Pitch = -89.0f;
+		}
 
-	/**
-	 * Zoom
-	 *
-	 * These methods alter the view based on mouse movement.  The arguments
-	 * changeHoriz and changeVert specify, respectively, the amount
-	 * the mouse has moved horizontally/vertically as a fraction of the
-	 * total screen width/height.
-	 *
-	 * zoom: Zoom in or out by changing the distance between the view
-	 * center and the viewpoint; the view center is held fixed.  The
-	 * distance is changed by a fraction 2.0 ^ (m_zoomFraction*changeVert)
-	 * of the current distance; m_zoomFraction can be altered to adjust
-	 * zoom speed.
-	 *
-	*/
-	void zoom(float changeVert);
+		// Update Front, Right and Up Vectors using the updated Euler angles
+		updateCameraVectors();
+	}
 
-	/**
-	 * Rotate
-	 *
-	 * These methods alter the view based on mouse movement.  The arguments
-	 * changeHoriz and changeVert specify, respectively, the amount
-	 * the mouse has moved horizontally/vertically as a fraction of the
-	 * total screen width/height.
-	 *
-	 *
-	 * rotate: Rotate about the view plane axes; the first argument is for
-	 * rotation about the vertical view axis and the second is for
-	 * rotation about the horizontal view axis.  The amount of rotation
-	 * is controlled by m_rotateSpeed.
-	*/
-	void rotate(float changeHoriz, float changeVert);
-
-	/**
-	 * Center at
-	 *
-	 * These methods alter the view based on mouse movement.  The arguments
-	 * changeHoriz and changeVert specify, respectively, the amount
-	 * the mouse has moved horizontally/vertically as a fraction of the
-	 * total screen width/height.
-	 *
-	 * centerAt: Centers the view at the given location without changing the
-	 * global orientation or scaling.
-	*/
-	void centerAt(const  glm::vec3 &pos);
-
-	void lookFrom(const  glm::vec3 &pos);
-	void setFieldOfView(float fieldOfView);
-	void setAspectRatio(float aspectRatio);
-	void setTranslateSpeed(float translateSpeed);
-	void setZoomFraction(float zoomFraction);
-	void setRotateSpeed(float rotateSpeed);
+	// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
+	void ProcessMouseScroll(float yoffset)
+	{
+		if (Zoom >= 1.0f && Zoom <= 45.0f)
+			Zoom -= yoffset;
+		if (Zoom <= 1.0f)
+			Zoom = 1.0f;
+		if (Zoom >= 45.0f)
+			Zoom = 45.0f;
+	}
 
 private:
-
-	glm::vec3 m_viewPoint;
-	glm::vec3 m_viewCenter;
-	glm::vec3 m_upVector;
-	float m_fieldOfView;
-	float m_aspectRatio;
-
-	float m_translateSpeed;
-	float m_zoomFraction;
-	float m_rotateSpeed;
-
-	glm::vec3 m_viewDir;
-	glm::vec3 m_imagePlaneHorizDir;
-	glm::vec3 m_imagePlaneVertDir;
-
-	/**
-	 * These member variables hold the width and height of the plane that
-	 * a) is parallel to the clipping planes, b) passes through the
-	 * the view center, and c) is clipped by the frustrum boundaries.
-	 * This is useful for converting mouse input into view transformations
-	 * of an appropriate magnitude.
-	 */
-
-	float m_displayWidth;
-	float m_displayHeight;
-
-	/** These are used for tracking */
-
-	float m_lastDesired[3];
-
-	/**
-	 * The following values contain the geometry of our viewing volume: the
-	 * field of view, the aspect ratio, the height and width of view plane
-	 * containing the center of projection, the world-coordinate directions
-	 * of the image x and y axes, and the dimensions of the viewport.
-	 */
-	void getFrustrumInfo();
+	// Calculates the front vector from the Camera's (updated) Euler Angles
+	void updateCameraVectors()
+	{
+		// Calculate the new Front vector
+		glm::vec3 front;
+		front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+		front.y = sin(glm::radians(Pitch));
+		front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+		Front = glm::normalize(front);
+		// Also re-calculate the Right and Up vector
+		Right = glm::normalize(glm::cross(Front, WorldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+		Up = glm::normalize(glm::cross(Right, Front));
+	}
 };

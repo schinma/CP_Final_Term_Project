@@ -94,27 +94,32 @@ std::string Shader::getInfoLog(ObjectType type, int id)
 	GLint infoLogLength;
 	if (type == ObjectType::SHADER)
 	{
-		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &infoLogLength);
+		glGetShaderiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
 	}
 	else
 	{
-		glGetProgramiv(id, GL_INFO_LOG_LENGTH, &infoLogLength);
+		glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
 	}
 
 	GLchar *infoLog = new GLchar[infoLogLength + 1];
 	if (type == ObjectType::SHADER)
 	{
-		glGetShaderInfoLog(id, infoLogLength, NULL, infoLog);
+		glGetShaderInfoLog(programID, infoLogLength, NULL, infoLog);
 	}
 	else
 	{
-		glGetProgramInfoLog(id, infoLogLength, NULL, infoLog);
+		glGetProgramInfoLog(programID, infoLogLength, NULL, infoLog);
 	}
 
 	std::string infoLogString(infoLog);
 	delete[] infoLog;
 
 	return infoLogString;
+}
+
+GLuint Shader::getId() const
+{
+	return programID;
 }
 
 void Shader::use()
@@ -129,15 +134,113 @@ void Shader::disable()
 
 void Shader::setBool(const std::string &name, bool value) const
 {
-	glUniform1i(glGetUniformLocation(programID, name.c_str()), (int)value);
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else 
+		glUniform1i(uniform, (int)value);
 }
 
 void Shader::setInt(const std::string &name, int value) const
 {
-	glUniform1i(glGetUniformLocation(programID, name.c_str()), value);
+
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniform1i(uniform, value);
 }
 
 void Shader::setFloat(const std::string &name, float value) const
 {
-	glUniform1f(glGetUniformLocation(programID, name.c_str()), value);
+
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniform1f(uniform, value);
+}
+
+void Shader::setVec2(const std::string &name, const glm::vec2 &value) const
+{
+
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniform2fv(uniform, 1, &value[0]);
+}
+void Shader::setVec2(const std::string &name, float x, float y) const
+{
+
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniform2f(uniform, x, y);
+}
+
+void Shader::setVec3(const std::string &name, const glm::vec3 &value) const
+{
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniform3fv(uniform, 1, &value[0]);
+}
+void Shader::setVec3(const std::string &name, float x, float y, float z) const
+{
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniform3f(uniform, x, y, z);
+}
+
+void Shader::setVec4(const std::string &name, const glm::vec4 &value) const
+{
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniform4fv(uniform, 1, &value[0]);
+}
+void Shader::setVec4(const std::string &name, float x, float y, float z, float w) const
+{
+
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniform4f(uniform, x, y, z, w);
+}
+
+void Shader::setMat2(const std::string &name, const glm::mat2 &mat) const
+{
+
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniformMatrix2fv(uniform, 1, GL_FALSE, &mat[0][0]);
+}
+
+void Shader::setMat3(const std::string &name, const glm::mat3 &mat) const
+{
+
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniformMatrix3fv(uniform, 1, GL_FALSE, &mat[0][0]);
+}
+
+void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const
+{
+
+	GLuint uniform = glGetUniformLocation(programID, name.c_str());
+	if (uniform == -1)
+		std::cout << "Could not find uniform " + name + ", location = -1" << std::endl;
+	else
+		glUniformMatrix4fv(uniform, 1, GL_FALSE, &mat[0][0]);
 }
