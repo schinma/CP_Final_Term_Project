@@ -1,196 +1,212 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include <iostream>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
-#include "Model.h"
-#include "Shader.h"
-#include "Camera.h"
+#include "MyGlWindow.h"
 
+MyGlWindow *win;
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window);
+bool lbutton_down;
+bool rbutton_down;
+bool mbutton_down;
+double m_lastMouseX;
+double m_lastMouseY;
+double cx, cy;
 
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+static Parameter param;
 
-// camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
-
-// timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-
-int main()
+void window_size_callback(GLFWwindow* window, int width, int height)
 {
+	win->resize(width, height);
+}
+
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+
+
+static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	cx = xpos;
+	cy = ypos;
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+	if (action == GLFW_PRESS) {
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+		m_lastMouseX = xpos;
+		m_lastMouseY = ypos;
+	}
+
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (GLFW_PRESS == action)
+			lbutton_down = true;
+		else if (GLFW_RELEASE == action)
+			lbutton_down = false;
+	}
+
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+		if (GLFW_PRESS == action)
+			rbutton_down = true;
+		else if (GLFW_RELEASE == action)
+			rbutton_down = false;
+	}
+
+	else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+		if (GLFW_PRESS == action)
+			mbutton_down = true;
+		else if (GLFW_RELEASE == action)
+			mbutton_down = false;
+	}
+}
+
+
+void mouseDragging(double width, double height)
+{
+
+	ImGuiIO &io = ImGui::GetIO();
+
+	if (!io.WantCaptureMouse) {
+		if (lbutton_down) {
+			float fractionChangeX = static_cast<float>(cx - m_lastMouseX) / static_cast<float>(width);
+			float fractionChangeY = static_cast<float>(m_lastMouseY - cy) / static_cast<float>(height);
+			win->m_viewer->rotate(fractionChangeX, fractionChangeY);
+		}
+		else if (mbutton_down) {
+			float fractionChangeX = static_cast<float>(cx - m_lastMouseX) / static_cast<float>(width);
+			float fractionChangeY = static_cast<float>(m_lastMouseY - cy) / static_cast<float>(height);
+			win->m_viewer->zoom(fractionChangeY);
+		}
+		else if (rbutton_down) {
+			float fractionChangeX = static_cast<float>(cx - m_lastMouseX) / static_cast<float>(width);
+			float fractionChangeY = static_cast<float>(m_lastMouseY - cy) / static_cast<float>(height);
+			win->m_viewer->translate(-fractionChangeX, -fractionChangeY, 1);
+		}
+		m_lastMouseX = cx;
+		m_lastMouseY = cy;
+	}
+}
+
+
+int main() {
+	/* Initialize the library */
 	if (!glfwInit())
 	{
-		//Initialization failed 
-		std::cout << "GLFW initialization failed" << std::endl;
-		return -1;
+		// Initialization failed
+		std::cout << "Error in init" << std::endl;
+		return 0;
 	}
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
-	if (window == NULL)
+	int width = 800;
+	int height = 800;
+	/* Create a windowed mode window and its OpenGL context */
+	GLFWwindow* window = glfwCreateWindow(width, height, "OpenGL FrameWork", NULL, NULL);
+
+	// Setup Dear ImGui binding
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+	const char* glsl_version = "#version 430";
+
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init(glsl_version);
+
+	// GUI Styles
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsClassic();
+	//ImGui::StyleColorsLight();
+
+	if (!window)
 	{
-		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
 
 	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-	// Glew
+	/* Make the window's context current */
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	if (err != GLEW_OK)
 	{
 		//Problem: glewInit failed, something is seriously wrong.
 		std::cout << "glewInit failed, aborting." << std::endl;
-		return -1;
+		return 0;
 	}
 
-	Shader ourShader("shaders/model_loading.vert", "shaders/model_loading.frag");
+	glfwSwapInterval(1);  //enable vsync
 
-	// load models
-	// -----------
-	Model ourModel("models/nanosuit/nanosuit.obj");
+	printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
+	glfwSetKeyCallback(window, key_callback); //call for keyboard
+	glfwSetWindowSizeCallback(window, window_size_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetCursorPosCallback(window, cursor_pos_callback);
 
-	// Set the light parameters 
-	ourShader.setVec3("Light.Intensity", glm::vec3(0.8f, 0.8f, 0.8f));
-	ourShader.setVec3("Light.Position", glm::vec3(0.0f, 10.0f, 0.0f));
+	win = new MyGlWindow(width, height);
 
-	glm::vec3 Ka(0.1, 0.1, 0.1);
-	glm::vec3 Kd(0.4, 0.4, 0.4);
-	glm::vec3 Ks(0.9, 0.9, 0.9);
-	GLfloat shiness = 180.0f;
-
-	ourShader.setVec3("Ka", Ka);
-	ourShader.setVec3("Kd", Kd);
-	ourShader.setVec3("Ks", Ks);
-	ourShader.setFloat("shininess", shiness);
-
-	// draw in wireframe
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	// render loop
-	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
-		// per-frame time logic
-		// --------------------
-		float currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
+		static float bg_colors[3] = { 0.4, 0.4, 0.4 };
 
-		// input
-		// -----
-		processInput(window);
+		// Start the Dear ImGui frame
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 
-		// render
-		// ------
-		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+
+		glClearColor(bg_colors[0], bg_colors[1], bg_colors[2], 1.0); //background color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// don't forget to enable shader before setting uniforms
-		ourShader.use();
+		glEnable(GL_DEPTH_TEST);
+		int display_w, display_h;
+		glfwGetFramebufferSize(window, &display_w, &display_h);
+		glViewport(0, 0, display_w, display_h);
 
-		// view/projection transformations
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		glm::mat4 view = camera.GetViewMatrix();
+		if (ImGui::Begin("First Window")) {
 
-		// render the loaded model
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // translate it down so it's at the center of the scene
-		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
-		
-		glm::mat4 modelView = view * model;
-		glm::mat4 inverseModelView = glm::inverse(modelView);
-		glm::mat3 normal = glm::mat3(glm::transpose(inverseModelView));
-		glm::mat4 mvp = projection * view * model;
+			ImGui::SetWindowSize(ImVec2(350, 200));
 
-		ourShader.setMat4("ModelViewMatrix", modelView);
-		ourShader.setMat4("mvp", mvp);
-		ourShader.setMat3("NormalMatrix", normal);
+			ImGui::SliderFloat("Light X", &param.light_x, -10.0f, 10.0f);
+			ImGui::SliderFloat("Light Y", &param.light_y, 0.0f, 20.0f);
+			ImGui::SliderFloat("Light Z", &param.light_z, -10.0f, 10.0f);
 
-		ourModel.Draw(ourShader);
+			ImGui::End();
+		}
+		win->draw(param);
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 
-		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-		// -------------------------------------------------------------------------------
+		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
+		/* Poll for and process events */
 		glfwPollEvents();
+
+		mouseDragging(display_w, display_h);
 	}
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
 	glfwDestroyWindow(window);
 	glfwTerminate();
-
 	return 0;
 }
 
 
-void processInput(GLFWwindow *window)
-{
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.ProcessKeyboard(FORWARD, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.ProcessKeyboard(BACKWARD, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera.ProcessKeyboard(LEFT, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera.ProcessKeyboard(RIGHT, deltaTime);
-}
-
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-	// make sure the viewport matches the new window dimensions; note that width and 
-	// height will be significantly larger than specified on retina displays.
-	glViewport(0, 0, width, height);
-}
-
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
-{
-	if (firstMouse)
-	{
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
-	}
-
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-	lastX = xpos;
-	lastY = ypos;
-
-	camera.ProcessMouseMovement(xoffset, yoffset);
-}
-
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	camera.ProcessMouseScroll(yoffset);
-}
