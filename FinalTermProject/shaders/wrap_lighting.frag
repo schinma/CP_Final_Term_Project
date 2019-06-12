@@ -2,6 +2,7 @@
 
 in vec3 Position; 
 in vec3 Normal;
+in vec4 FragPosLightSpace;
 
 uniform vec3 Kd;
 uniform vec3 Ka;
@@ -14,6 +15,7 @@ struct LightInfo {
 };
 
 uniform LightInfo Light;
+layout (location = 0) uniform  sampler2D  depthMap;
 
 //we need to create at least one "out vec4" for settting fragment colors
 layout (location = 0) out vec4 fragColor;  //r,g,b,a
@@ -38,19 +40,28 @@ void main()
 	vec3 ambient = Ka * Light.Intensity;
 	vec3 specular = Ks * Light.Intensity * pow(max(dot(L, N), 0.0), shininess);
 	vec3 diffuse = Kd * Light.Intensity * max(dot(L, N), 0.0);
+	vec3 transluscent;
 
-	vec3 finalColor = ambient + specular + diffuse + Kd * I;
+	vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
+	projCoords = projCoords * 0.5 + 0.5;
 
-	//float NdotL = dot(N, L);
-	//float NdotL_wrap = (NdotL + wrap) / (1 + wrap);
-	//float wrap_diffuse = max(0, NdotL_wrap);
+	float dLightToBackSide = texture(depthMap, projCoords.xy).r;
+	float dLightToFrontSide = FragPosLightSpace.z;
+	
+	float absorption = dLightToFrontSide - dLightToBackSide;
 
-	//float scatter = smoothstep(0.0, scatterWidth, NdotL_wrap);
+	//vec3 E = normalize( - vViewPosition .xyz );	
+	
+	//float contribution = 0.75 - 0.25 * dot(-uLightViewDirection.xyz, E);
+	
+	vec3 translucent = I * pow( exp(-absorption ), 4.0 ) * (Light.Intensity + ambient);
 
-	//vec3 specular =   Ks * Light.Intensity * (NdotL_wrap <= 0 ? 0 : pow(max(dot(R,V), 0.0), shininess));
-	//vec3 diffuse = Kd * Light.Intensity * wrap_diffuse;
+	// Output final color.
+	//fragColor.rgb = ambient + attenuation * ( shadow * ( specular + diffuse )  + rim + translucent );
 
-	//vec3 finalColor = ambient + diffuse + scatter * scatterColor + specular;
+	//vec3 finalColor = ambient + specular + diffuse + Kd * I;
 
+	vec3 finalColor = ambient * specular + diffuse + translucent;
+	
 	fragColor = vec4(finalColor, 1.0);
 }

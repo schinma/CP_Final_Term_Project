@@ -10,11 +10,14 @@
 
 #include "Mesh.h"
 #include "Shader.h"
+#include "fboManager.h"
+#include "textureManager.h"
 
 struct Parameter {
 	float light_x;
 	float light_y;
 	float light_z;
+	bool depth;
 };
 
 class MyGlWindow {
@@ -33,9 +36,19 @@ private:
 
 	//Shaders
 	Shader *wrap_shader;
+	Shader *shadow_map;
+	Shader *debug_shader;
 
 	//Models
 	Mesh *dragon;
 
+	unsigned int fbo;
+	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+	unsigned int depthMap;
+	
 	void setupBuffer();
+	void renderQuad();
+
+	unsigned int quadVAO = 0;
+	unsigned int quadVBO;
 };

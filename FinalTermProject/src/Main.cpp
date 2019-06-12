@@ -160,7 +160,7 @@ int main() {
 
 	while (!glfwWindowShouldClose(window))
 	{
-		static float bg_colors[3] = { 0.4, 0.4, 0.4 };
+		static float bg_colors[3] = { 0.1, 0.1, 0.1 };
 
 		// Start the Dear ImGui frame
 		ImGui_ImplOpenGL3_NewFrame();
@@ -183,6 +183,7 @@ int main() {
 			ImGui::SliderFloat("Light X", &param.light_x, -10.0f, 10.0f);
 			ImGui::SliderFloat("Light Y", &param.light_y, 0.0f, 20.0f);
 			ImGui::SliderFloat("Light Z", &param.light_z, -10.0f, 10.0f);
+			ImGui::Checkbox("Depth Map", &param.depth);
 
 			ImGui::End();
 		}

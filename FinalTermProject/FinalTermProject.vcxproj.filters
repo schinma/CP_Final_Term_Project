@@ -57,6 +57,12 @@
     <ClCompile Include="src\Texture.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\fboManager.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\textureManager.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Shader.h">
@@ -101,6 +107,12 @@
     <ClInclude Include="include\Viewer.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\fboManager.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\textureManager.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\model_loading.frag">
@@ -113,6 +125,18 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="shaders\wrap_lighting.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shadow_map.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shadow_map.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\debug_depth.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\debug_depth.vert">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>
